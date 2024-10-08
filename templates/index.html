@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SegmentasiSkuy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{{ url_for('static', filename='img/favico.ico') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        /* Ensure that both images have the same width and height */
+        .result-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            width: 300px; /* Set a fixed width */
+            height: 300px; /* Set a fixed height to ensure uniformity */
+            object-fit: contain; /* Preserve aspect ratio */
+            margin: 0 auto; /* Center the image horizontally */
+        }
+
+        /* Center text and images in table cells */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center; /* Center text horizontally */
+            vertical-align: middle; /* Center content vertically */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar bg-body-tertiary bg-primary px-4">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="{{ url_for('static', filename='img/logo-unpad1.png') }}" alt="Logo" width="32" class="py-auto">
+                <h2 class="d-inline-flex align-items-center m-0 ms-2">Segmentasi Gambar</h2>
+            </a>
+            <a class="nav-link active" href="#" aria-current="page">Home</a>
+            
+        </div>
+    </nav>
+    
+
+    <div class="container m-5 mx-auto p-2 border rounded">
+        <h1 class="border-bottom pb-2 mb-3">Upload gambar untuk dilakukan segmentasi🔍</h1>
+        <p class="px-3">Unggah gambar dengan format PNG/JPG untuk melakukan segmentasi apabila terdapat lubang jalan</p>
+        <form id="uploadForm" enctype="multipart/form-data" class="pt-3 row">
+            <div class="col">
+                <input class="form-control form-control-lg" id="fileInput" name="file" type="file" accept="image/png, image/jpeg">
+            </div>
+            <div class="col-auto">
+                <input type="button" value="Upload" onclick="uploadImage()" class="btn btn-primary btn-lg">
+            </div>
+            
+        </form>
+
+        <div id="resultContainer" style="display: none;" class="mt-5">
+            <h2>Hasil segmentasi:</h2>
+            <table class="border">
+                <tr>
+                    <th>Gambar yang diunggah</th>
+                    <th>CNN tanpa Pretrained Model</th>
+                    <th>Segmentasi dengan RAG (skimage)</th>
+                </tr>
+                <tr>
+                    <td>
+                        <img id="uploadedImg" class="result-image" alt="Uploaded Image" style="display: none;">
+                    </td>
+                    <td>
+                        <img id="predictedImg" class="result-image" alt="No Image Detected" style="display: none;">
+                    </td>
+                    <td>
+                        <img id="predictedImgRAG" alt="To Be Done">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    
+
+    <script type="text/javascript">
+        function uploadImage() {
+            var formData = new FormData();
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+            formData.append("file", file);
+
+            if (file) {
+                // Show the result container
+                document.getElementById('resultContainer').style.display = 'block';
+
+                // Show the uploaded image in the left cell
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var uploadedImg = document.getElementById('uploadedImg');
+                    uploadedImg.src = e.target.result;
+                    uploadedImg.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                $.ajax({
+                    url: '/predict',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        if (response.image) {
+                            var img = document.getElementById('predictedImg');
+                            img.src = 'data:image/png;base64,' + response.image;
+                            img.style.display = 'block';
+                        }
+                    },
+                    error: function(response) {
+                        alert('Error: ' + response.responseJSON.error);
+                    }
+                });
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
